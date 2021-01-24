@@ -56,9 +56,20 @@ class make_scene(commands.Cog):
             final = bytes(out.node.kwargs["filename"], encoding='utf8')
 
             await init.delete()
-            await ctx.send(file=discord.File(final, f'{output_filename}.mp4'))
+            await ctx.send(file=discord.File(final, f'{output_filename}.mp4')
+                           
+                           
+                           
+        @changeprefix.error
+        async def cosplay_error(self, ctx, error):
+            if isinstance(error, commands.MissingRequiredArgument):
+                await ctx.send(f'Provide amount of messages wanted for the command.')
 
-            return
+            else:
+                print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+                traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+
+      
 
 
 def setup(bot):
