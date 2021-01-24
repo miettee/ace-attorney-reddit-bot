@@ -559,6 +559,7 @@ def ace_attorney_anim(config: List[Dict], output_filename: str = "output.mp4"):
         strict="experimental",
     )
     out.run()
+    return out                              
 
 
 character_location_map = {
@@ -753,4 +754,4 @@ def comments_to_scene(comments: List, characters: Dict, **kwargs):
             formatted_scene["audio"] = last_audio
             change_audio = False
         formatted_scenes.append(formatted_scene)
-    ace_attorney_anim(formatted_scenes, **kwargs)
+    return ace_attorney_anim(formatted_scenes, **kwargs)
