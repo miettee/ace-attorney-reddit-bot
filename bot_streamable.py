@@ -1,4 +1,6 @@
 import os
+import sys
+import traceback
 import re
 import anim
 import discord
