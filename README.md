@@ -1,6 +1,6 @@
 ## Ace Attorney discord bot 👨🏼‍⚖️
 
-Adapted to discord.
+Adapted to discord- some things may be slightly messy.
 
 Discord bot that turns comment chains into ace attorney scenes.
 
