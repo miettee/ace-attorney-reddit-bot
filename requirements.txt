@@ -1,5 +1,5 @@
 cython
-spaw
+discord
 Pillow
 matplotlib
 opencv-python
@@ -8,5 +8,4 @@ moviepy
 ffmpeg
 spacy
 textblob
-praw
 tinydb
