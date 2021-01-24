@@ -60,8 +60,8 @@ class make_scene(commands.Cog):
                            
                            
                            
-        @changeprefix.error
-        async def cosplay_error(self, ctx, error):
+        @make_scene.error
+        async def scene_error(self, ctx, error):
             if isinstance(error, commands.MissingRequiredArgument):
                 await ctx.send(f'Provide amount of messages wanted for the command.')
 
