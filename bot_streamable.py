@@ -1,97 +1,65 @@
 import os
-import sys
-import praw
 import re
-from tinydb import TinyDB, Query
 import anim
+import discord
+from discord.ext import commands
 from collections import Counter
-import spaw
+import graphviz
 
-streamable_username = os.environ.get("streamable_username")
-streamable_password = os.environ.get("streamable_password")
-
-reddit_client_id = os.environ.get("reddit_client_id")
-reddit_client_secret = os.environ.get("reddit_client_secret")
-reddit_refresh_token = os.environ.get("reddit_refresh_token")
-
-_spaw = spaw.SPAW()
-_spaw.auth(streamable_username, streamable_password)
-
-db = TinyDB("db.json")
-
-reddit = praw.Reddit(
-    client_id=reddit_client_id,
-    client_secret=reddit_client_secret,
-    refresh_token=reddit_refresh_token,
-    user_agent="/u/objection-bot v0.0",
-)
-
-
-with open('subreddits.txt', 'r') as sublst:
-    subreddits = [sub.strip(' \n') for sub in sublst if sub.strip(' \n') != '']
 
 print("starting...")
 
-def get_comment_chain(comment):
-    if not isinstance(comment, praw.models.Comment):
-        return
-    parent_comment = get_comment_chain(comment.parent())
-    if parent_comment is not None:
-        return [comment, *parent_comment]
-    else:
-        return [comment]
 
 
-def get_submission(comment):
-    if not isinstance(comment, praw.models.Comment):
-        return comment
-    else:
-        return get_submission(comment.parent())
+class make_scene(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
 
 
-def init_stream(subreddit_name: str):
-    subreddit = reddit.subreddit(subreddit_name)
-    return subreddit.stream.comments(pause_after=-1)
+    @commands.command(name='make_scene', aliases=["ms"])
+    async def make_scene(self, ctx, arg):
+            await ctx.message.delete()
+            scene_count = int(arg)
+
+            if not isinstance(scene_count, int) or scene_count <= 0:
+                return
+            
+
+            messages = await ctx.channel.history(limit = scene_count).flatten()
+
+            for message in messages:
+                if not message.content:
+                    message.content = "Attachment"
+                else:
+                    pass
+
+            messages.reverse()
+
+            init = await ctx.send("Making the video..")
+
+            # handle metadata
+            print(f"handling metadata...")
+            authors = [comment.author.name for comment in messages]
+            most_common = [t[0] for t in Counter(authors).most_common()]
 
 
-User = Query()
-comment_streams = [init_stream(subreddit) for subreddit in subreddits]
-while True:
-    for comment_stream in comment_streams:
-        for comment in comment_stream:
-            if comment is None:
-                break
-            if re.search("!objection-*bot", comment.body, re.IGNORECASE):
-                if len(db.search(User.id == comment.id)) == 0:
-                    try:
-                        print(
-                            f"doing {comment.id} (https://www.reddit.com{comment.permalink})"
-                        )
+            # generate video
+            output_filename = f"{ctx.message.id}.mp4"
+            print(f"generating video {output_filename}...")
+            characters = trial.get_characters(most_common)
+            out = trial.comments_to_scene(
+                messages, characters, output_filename=output_filename
+            )
 
-                        # handle metadata
-                        print(f"handling metadata...")
-                        db.insert({"id": comment.id})
-                        comments = list(reversed(get_comment_chain(comment)))[:-1]
-                        authors = [comment.author.name for comment in comments]
-                        most_common = [t[0] for t in Counter(authors).most_common()]
-                        submission = get_submission(comment)
+            # upload video
+            print(f"uploading video...")
+            final = bytes(out.node.kwargs["filename"], encoding='utf8')
 
-                        # generate video
-                        output_filename = f"{comment.id}.mp4"
-                        print(f"generating video {output_filename}...")
-                        characters = anim.get_characters(most_common)
-                        anim.comments_to_scene(
-                            comments, characters, output_filename=output_filename
-                        )
+            await init.delete()
+            await ctx.send(file=discord.File(final, f'{output_filename}.mp4'))
 
-                        # upload video
-                        print(f"uploading video...")
-                        response = _spaw.videoUpload(output_filename)
-                        print(response)
-                        comment.reply(
-                            f"[Here's the video!](https://streamable.com/{response['shortcode']})"
-                        )
+            return
 
-                        print(f"done {comment.id}")
-                    except Exception as e:
-                        print(e)
+
+def setup(bot):
+    bot.add_cog(make_scene(bot))
